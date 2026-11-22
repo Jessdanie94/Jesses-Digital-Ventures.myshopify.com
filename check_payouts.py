@@ -1,47 +1,25 @@
-import os
-import csv
+Update `check_payouts.py` cleanly without changing its offline, read-only architecture (it must still make zero network calls, never modify `2026_cra_ledger.csv` or any other file, and preserve all existing `Decimal` validation, `_read_amount`, `_add_exact`, `_multiply_exact`, `_format_cad`, and `_select_schema` logic):
 
-def check_payout_status(ledger_file="2026_cra_ledger.csv"):
-    print("\n==================================================")
-    print("      WONDERFUL GEMS POINT - PAYOUT AUDIT        ")
-    print("==================================================\n")
-    
-    total_revenue = 0.0
-    total_expenses = 0.0
-    
-    if os.path.exists(ledger_file):
-        with open(ledger_file, mode="r") as f:
-            reader = csv.DictReader(f)
-            for row in reader:
-                try:
-                    amount = float(row["Amount_CAD"])
-                    category = row["Category"].upper()
-                    if category == "REVENUE":
-                        total_revenue += amount
-                    elif category == "EXPENSE":
-                        total_expenses += amount
-                except (ValueError, KeyError):
-                    pass
+1. **Update `STORE_DISPLAY_NAME` (Line 23):**
+   - Change `STORE_DISPLAY_NAME = "jesses-digital-ventures.myshopify.com"` to:
+     `STORE_DISPLAY_NAME = "ppd1xp-1c.myshopify.com"`
 
-    net_cleared_balance = total_revenue - total_expenses
+2. **Replace the Illustrative `50/30/20` Printout Block (`if difference > 0:` in `check_payout_status`) with the Two-Stage Gate Protocol Display:**
+   - Keep all existing header lines, schema notices, row counts, `Ledger REVENUE`, `Ledger EXPENSE`, `Ledger difference (REVENUE - EXPENSE)`, and assumption disclaimers intact.
+   - When `difference > 0`, replace the `PURELY ILLUSTRATIVE 50/30/20 CALCULATION` block with a read-only illustrative breakdown for both stages of the **Two-Stage Gate Protocol** using `_multiply_exact` and `_format_cad`:
+     - **Stage 1 — Stabilization Mode (`65 / 35 / 0 / 0`, active until overdue bills = $0 and Fulfillment Vault >= $150 USD):**
+       - `Fulfillment & Tax Vault (65%): {_format_cad(_multiply_exact(difference, Decimal('0.65')))}`
+       - `Debt & Bill Sweep (35%): {_format_cad(_multiply_exact(difference, Decimal('0.35')))}`
+       - `Ads Budget (0%): $0.00 CAD`
+       - `Owner Profit Draw (0%): $0.00 CAD`
+     - **Stage 2 — Steady-State Growth Mode (`50 / 30 / 10 / 10`, unlocks once overdue bills = $0 and Fulfillment Vault >= $150 USD):**
+       - `Fulfillment & Tax Reserve (50%): {_format_cad(_multiply_exact(difference, Decimal('0.50')))}`
+       - `Growth & Ads Budget (30%): {_format_cad(_multiply_exact(difference, Decimal('0.30')))}`
+       - `Platform Buffer (10%): {_format_cad(_multiply_exact(difference, Decimal('0.10')))}`
+       - `Owner Profit Draw (10%): {_format_cad(_multiply_exact(difference, Decimal('0.10')))}`
+   - In the `else:` branch (`difference <= 0`), update the message from `"No 50/30/20 estimates: the exact ledger difference is not positive."` to:
+     `"No Two-Stage Gate estimates: the exact ledger difference is not positive."`
+   - Keep `print("No money is moved.\n")` at the end of `check_payout_status`.
 
-    print(f"Total Gross Sales Logged (Line 8230):  ${total_revenue:10.2f} CAD")
-    print(f"Total Expenses Settled  (Line 8810):  ${total_expenses:10.2f} CAD")
-    print(f"--------------------------------------------------")
-    print(f"Current Net Cleared Balance:          ${net_cleared_balance:10.2f} CAD\n")
-
-    if net_cleared_balance > 0:
-        fulfillment_reserve = net_cleared_balance * 0.50
-        overhead_reserve    = net_cleared_balance * 0.30
-        owner_draw          = net_cleared_balance * 0.20
-
-        print("==================================================")
-        print("        RECOMMENDED 50/30/20 ALLOCATION          ")
-        print("==================================================")
-        print(f"1. Fulfillment Reserve (50%):          ${fulfillment_reserve:10.2f} CAD")
-        print(f"2. Operating Overhead  (30%):          ${overhead_reserve:10.2f} CAD")
-        print(f"3. Owner Draw Transfer (20%):          ${owner_draw:10.2f} CAD")
-        print("==================================================\n")
-
-if __name__ == "__main__":
-    check_payout_status()
+3. **Verify Before Pushing:**
+   - Run `python3 -m py_compile check_payouts.py` and execute a read-only test run against a temporary sample CSV (deleting the temporary CSV afterward) to confirm zero syntax errors, zero modifications to `2026_cra_ledger.csv`, and exact cent-rounded outputs, then commit and push to `main`.
